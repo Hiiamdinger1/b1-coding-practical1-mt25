@@ -75,8 +75,61 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+        """Load mission data from a CSV file and return a Mission instance.
+
+        The CSV is expected to have three columns with headers:
+        `reference`, `cave_height`, `cave_depth`.
+
+        Args:
+            file_name: Path to the CSV file.
+
+        Returns:
+            Mission: an instance populated with numpy arrays for
+            reference, cave_height and cave_depth.
+
+        Raises:
+            ValueError: if the required columns are missing or lengths mismatch.
+        """
+        try:
+            import pandas as pd
+        except Exception:
+            pd = None
+
+        if pd is not None:
+            df = pd.read_csv(file_name)
+            required = ["reference", "cave_height", "cave_depth"]
+            if not all(col in df.columns for col in required):
+                raise ValueError(f"CSV must contain columns: {required}")
+
+            reference = df["reference"].to_numpy(dtype=float)
+            cave_height = df["cave_height"].to_numpy(dtype=float)
+            cave_depth = df["cave_depth"].to_numpy(dtype=float)
+        else:
+            # Fallback to builtin csv reader
+            import csv
+            reference_list = []
+            cave_height_list = []
+            cave_depth_list = []
+            with open(file_name, newline='') as csvfile:
+                reader = csv.DictReader(csvfile)
+                required = ["reference", "cave_height", "cave_depth"]
+                if not all(col in reader.fieldnames for col in required):
+                    raise ValueError(f"CSV must contain columns: {required}")
+                for row in reader:
+                    reference_list.append(float(row["reference"]))
+                    cave_height_list.append(float(row["cave_height"]))
+                    cave_depth_list.append(float(row["cave_depth"]))
+
+            import numpy as _np
+            reference = _np.array(reference_list, dtype=float)
+            cave_height = _np.array(cave_height_list, dtype=float)
+            cave_depth = _np.array(cave_depth_list, dtype=float)
+
+        # Validate lengths
+        if not (len(reference) == len(cave_height) == len(cave_depth)):
+            raise ValueError("Columns must have the same length")
+
+        return cls(reference, cave_height, cave_depth)
 
 
 class ClosedLoop:
